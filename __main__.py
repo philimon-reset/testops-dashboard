@@ -125,6 +125,9 @@ def main():
         else:
             num_days = '30'
         h.testrail_plans_and_runs(args.project, num_days)
+    if args.report_type == 'testrail-test-durations':
+        h = TestRailClient()
+        h.testrail_test_duration()
     if args.report_type == 'testrail-milestones':
         h = TestRailClient()
         h.testrail_milestones(arg_list)

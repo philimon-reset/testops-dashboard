@@ -736,6 +736,52 @@ UNLOCK TABLES;
 
 
 --
+-- Table structure for table `report_test_results_beta`
+--
+
+DROP TABLE IF EXISTS `report_test_results_beta`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `report_test_results_beta` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `testrail_result_id` int NOT NULL,
+  `run_id` int NOT NULL,
+  `test_id` int NOT NULL,
+  `elapsed` int NOT NULL,
+  `status_id` int NOT NULL,
+  `testrail_created_on` date DEFAULT NULL,
+  `testrail_completed_on` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `test_result_runs` (`run_id`),
+  CONSTRAINT `test_result_runs_beta` FOREIGN KEY (`run_id`) REFERENCES `report_test_runs` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2097 DEFAULT CHARSET=utf8mb3;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+--
+-- Table structure for table `report_test_results_l10n`
+--
+
+DROP TABLE IF EXISTS `report_test_results_l10n`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `report_test_results_l10n` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `testrail_result_id` int NOT NULL,
+  `run_id` int NOT NULL,
+  `test_id` int NOT NULL,
+  `elapsed` int NOT NULL,
+  `status_id` int NOT NULL,
+  `testrail_created_on` date DEFAULT NULL,
+  `testrail_completed_on` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `test_result_runs` (`run_id`),
+  CONSTRAINT `test_result_runs_l10n` FOREIGN KEY (`run_id`) REFERENCES `report_test_runs` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2097 DEFAULT CHARSET=utf8mb3;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+--
 -- Table structure for table `test_run_result_types`
 --
 
