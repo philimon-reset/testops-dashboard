@@ -21,7 +21,7 @@ from database import (
     ReportTestRailMilestones,
     ReportTestRailUsers,
     ReportTestPlans, ReportTestRuns,
-    ReportTestResultsBeta, ReportTestResultsL10N
+    ReportTestResults
 )
 
 from utils.datetime_utils import DatetimeUtils as dt
@@ -390,8 +390,9 @@ class TestRailClient(TestRail):
             self.db.report_test_plans_insert(projects_id, full_plans)
             # add the test runs for the queried test plans
             self.testrail_runs_update(num_days, full_plans)
-    def testrail_test_duration(self):
-        """Gets all the test result duration for the latest test plan and create table by os
+    
+    def testrail_test_results(self):
+        """Gets all the test result duration for the latest test plans
         Precondition: ReportTestPlans, ReportTestRuns exist (testrail_runs have been run prior)"""
         
         # Get the most recent test plan ids for beta and l10n
@@ -406,24 +407,27 @@ class TestRailClient(TestRail):
                     l10n_tp_id = tp.testrail_plan_id
                 if beta_tp_id and l10n_tp_id:
                     break
-        print(beta_tp_id, l10n_tp_id)
-            
-        with open("a.txt", "w") as f:
-            # Insert data for beta and refer back to test run table
-            self.db.clean_table(ReportTestResultsBeta)
-            print(self.get_test_plan(beta_tp_id))
-            beta_runs = self.get_test_plan(beta_tp_id)["entries"]
-            # self.db.session.query(ReportTestPlans).order_by(ReportTestPlans.testrail_plan_id.desc()).all()
-            for run in beta_runs:
-                for os in run["runs"]:
-                    db_run = self.db.session.query(ReportTestRuns).filter_by(testrail_run_id=os["id"]).first()
-                    db_run_id = self.db.session.query(ReportTestRuns).filter_by(testrail_run_id=os["id"]).first().id
-                    run_results = self.test_results_for_run(os["id"])["results"]
-                    print(f"insert: {len(run_results)}")
-                    total = db_run.test_case_passed_count+ db_run.test_case_retest_count+ db_run.test_case_failed_count+ db_run.test_case_blocked_count
-                    self.db.report_test_results_insert(db_run_id, run_results, True)
-                    if len(run_results) != db_run.test_case_passed_count:
-                        f.write(f"{total}, {len(run_results)}, {run_results}")
+        print(f"beta test plan: {beta_tp_id}, l10n test plan: {l10n_tp_id}")
+
+        self.db.clean_table(ReportTestResults)
+   
+        # Insert data for beta and refer back to test run table
+        beta_runs = self.get_test_plan(beta_tp_id)["entries"]
+        for run in beta_runs:
+            for os in run["runs"]:
+                db_run_id = self.db.session.query(ReportTestRuns).filter_by(testrail_run_id=os["id"]).first().id
+                run_results = self.test_results_for_run(os["id"])["results"]
+                self.db.report_test_results_insert(db_run_id, run_results, "Beta")
+                
+        # Same thing for l10n
+        l10n_runs = self.get_test_plan(l10n_tp_id)["entries"]
+        for run in l10n_runs:
+            for os in run["runs"]:
+                print(os["id"])
+                db_run_id = self.db.session.query(ReportTestRuns).filter_by(testrail_run_id=os["id"]).first().id
+                run_results = self.test_results_for_run(os["id"])["results"]
+                self.db.report_test_results_insert(db_run_id, run_results, 'L10N')
+
 
 class DatabaseTestRail(Database):
 
@@ -605,27 +609,36 @@ class DatabaseTestRail(Database):
             total['id'] = report.id
         return payload
     
-    def report_test_results_insert(self, db_run_id, payload, beta):
+    def report_test_results_insert(self, db_run_id, payload, type):
         # insert data from payload into report_test_results table
         for result in payload:
+            # Skip if not automated testing
+            if result["created_by"] != 976:
+                continue
             print(result)
             created_on = dt.convert_epoch_to_datetime(result['created_on'])  # noqa
             completed_on = dt.convert_epoch_to_datetime(result['completed_on']) if result.get('completed_on') else None  # noqa
+            
+            elapsed = result["elapsed"]
+            if elapsed:
+                if "min" in elapsed:
+                    parts = elapsed.split(" ")
+                    time = int(parts[0][:-3]) * 60 + (int(parts[1][:-3]) if len(parts) > 1 else 0)
+                else:
+                    time = elapsed[:-3]
             
             args = {
                 'testrail_result_id': result['id'],
                 'run_id': db_run_id,
                 'test_id': result['test_id'],
-                'elapsed': 1,
+                'elapsed': float(time),
                 'status_id': result['status_id'],
                 'testrail_created_on': created_on,
-                'testrail_completed_on': completed_on
+                'testrail_completed_on': completed_on,
+                'type': type
             }
 
-            if beta:
-                report = ReportTestResultsBeta(**args)
-            else: 
-                report = ReportTestResultsL10N(**args)
+            report = ReportTestResultsL10N(**args)
 
             self.session.add(report)
             self.session.commit()

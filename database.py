@@ -45,12 +45,8 @@ class ReportTestRuns(Base):
    __table__ = Table('report_test_runs', Base.metadata, autoload=True)
 
 
-class ReportTestResultsBeta(Base):
-    __table__ = Table('report_test_results_beta', Base.metadata, autoload=True)
-
-
-class ReportTestResultsL10N(Base):
-    __table__ = Table('report_test_results_l10n', Base.metadata, autoload=True)
+class ReportTestResults(Base):
+    __table__ = Table('report_test_results', Base.metadata, autoload=True)
 
 
 class ReportGithubIssues(Base):

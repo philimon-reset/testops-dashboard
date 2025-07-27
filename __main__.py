@@ -13,7 +13,7 @@ from api_github import GithubClient
 from api_jira import JiraClient
 from api_testrail import TestRailClient
 from api_sentry import SentryClient
-import api_confluence
+# import api_confluence
 
 from api_bitrise import BitriseClient
 
@@ -125,9 +125,9 @@ def main():
         else:
             num_days = '30'
         h.testrail_plans_and_runs(args.project, num_days)
-    if args.report_type == 'testrail-test-durations':
+    if args.report_type == 'testrail-test-results':
         h = TestRailClient()
-        h.testrail_test_duration()
+        h.testrail_test_results()
     if args.report_type == 'testrail-milestones':
         h = TestRailClient()
         h.testrail_milestones(arg_list)
